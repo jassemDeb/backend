@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: multilingual-chat-backend
+    command: gunicorn multilingual_chat_api.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - sqlite_data:/app/db
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DEBUG=0
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,148.113.181.101
+      - CORS_ALLOWED_ORIGINS=http://localhost:3001,http://148.113.181.101:3001
+      - DATABASE_ENGINE=django.db.backends.sqlite3
+      - DATABASE_NAME=/app/db/db.sqlite3
+    depends_on:
+      - redis
+    networks:
+      - backend-network
+    restart: unless-stopped
+  
+  redis:
+    image: redis:6-alpine
+    container_name: multilingual-chat-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+volumes:
+  sqlite_data:
+
+networks:
+  backend-network:
+    name: backend-network
+    driver: bridge
